@@ -41,6 +41,9 @@ filtro_doenca = st.sidebar.multiselect("Filtrar por Condição", doencas, defaul
 cromossomos = sorted(df['Cromossomo'].dropna().astype(str).unique())
 filtro_cromo = st.sidebar.multiselect("Filtrar por Cromossomo", cromossomos)
 
+# NOVO CONTROLE: Interseção
+apenas_intersecao = st.sidebar.checkbox("Exibir apenas genes comuns às doenças selecionadas")
+
 # Lógica de aplicação dos filtros no dataframe
 df_filtrado = df.copy()
 
@@ -52,6 +55,16 @@ if filtro_doenca:
 
 if filtro_cromo:
     df_filtrado = df_filtrado[df_filtrado['Cromossomo'].isin(filtro_cromo)]
+
+# NOVA LÓGICA: Filtragem por interseção (AND)
+if apenas_intersecao:
+    if len(filtro_doenca) > 1:
+        # Conta em quantas doenças únicas cada gene aparece
+        contagem_doencas = df_filtrado.groupby('Gene')['Doenca'].transform('nunique')
+        # Mantém apenas os genes que aparecem no mesmo número de doenças selecionadas no filtro
+        df_filtrado = df_filtrado[contagem_doencas == len(filtro_doenca)]
+    else:
+        st.sidebar.warning("Aviso: Selecione pelo menos duas doenças para visualizar a interseção.")
 
 # Métricas rápidas no topo
 col1, col2 = st.columns(2)
